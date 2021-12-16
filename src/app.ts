@@ -3,6 +3,7 @@ import cors from "cors";
 import userRouter from "./routes/user.router";
 import db from "./database/server.db";
 import folderRouter from "./routes/Folder.router";
+import investmentRouter from "./routes/Investment.router";
 
 const app = express();
 
@@ -21,6 +22,7 @@ app.get("/", (req, res) => {
 
 app.use("/users", userRouter);
 app.use("/folders", folderRouter);
+app.use("/investment", investmentRouter);
 
 app.use((req, res) => {
     req;

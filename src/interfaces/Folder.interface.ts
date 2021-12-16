@@ -6,5 +6,5 @@ type asyncFunction = (req: Request, res: Response) => Promise<Response>;
 export interface FolderControllerI {
     getAllUserFolders: asyncFunction;
     getOneUserFolder: asyncFunction;
-    createNewFolder: asyncFunction;
+    createNewFolder: syncFunction;
 }

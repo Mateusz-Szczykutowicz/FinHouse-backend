@@ -17,7 +17,7 @@ const FolderController: FolderControllerI = {
         //! dodać inwestycje <- wszystkie dla folderu
         return res.status(200).json({ message: "Folder", status: 200, folder });
     },
-    createNewFolder: async (req, res) => {
+    createNewFolder: (req, res) => {
         if (
             !req.body.firstName ||
             !req.body.lastName ||

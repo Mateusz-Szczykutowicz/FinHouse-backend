@@ -1,9 +1,9 @@
 import mongoose from "mongoose";
 
-const InvestmentSchema = new mongoose.Schema({
+const InstallmentSchema = new mongoose.Schema({
     id: { type: String, required: true },
     userId: { type: String, required: true },
-    folderId: { type: String, required: true },
+    investmentId: { type: String, required: true },
     firstName: { type: String, required: true },
     lastName: { type: String, required: true },
     email: { type: String, required: true },
@@ -11,8 +11,7 @@ const InvestmentSchema = new mongoose.Schema({
     startDate: { type: Date, required: true },
     endDate: { type: Date, required: true },
     initialAmount: { type: Number, required: true },
-    commission: { type: Number, required: true },
-    scan: { type: String, default: "" },
+    paidAmount: { type: Number, default: 0 },
 });
 
-export default mongoose.model("Investment", InvestmentSchema);
+export default mongoose.model("Installment", InstallmentSchema);

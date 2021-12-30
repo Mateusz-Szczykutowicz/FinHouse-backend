@@ -31,22 +31,29 @@ const InvestmentController: investemntControllerI = {
     createNewInwestment: async (req, res) => {
         if (
             !req.body.folderId ||
+            !req.body.startDate ||
             !req.body.endDate ||
             !req.body.initialAmount
         ) {
             return res.status(400).json({
                 message:
-                    "Folder ID or end date or initial amount field is empty",
+                    "Folder ID or start date or end date or initial amount field is empty",
                 status: 400,
             });
         }
         const userId = req.body.secure.id;
-        const { folderId, endDate, initialAmount } = req.body;
-        const elementsOfDate = endDate.split(".");
-        const date = new Date(
-            elementsOfDate[2] * 1,
-            elementsOfDate[1] * 1 - 1,
-            elementsOfDate[0] * 1 + 1
+        const { folderId, startDate, endDate, initialAmount } = req.body;
+        const elementsOfStartDate = startDate.split(".");
+        const dateStart = new Date(
+            elementsOfStartDate[2] * 1,
+            elementsOfStartDate[1] * 1 - 1,
+            elementsOfStartDate[0] * 1 + 1
+        );
+        const elementsOfEndDate = endDate.split(".");
+        const dateEnd = new Date(
+            elementsOfEndDate[2] * 1,
+            elementsOfEndDate[1] * 1 - 1,
+            elementsOfEndDate[0] * 1 + 1
         );
         const folder = await FolderSchema.findOne({ id: folderId });
         if (!folder) {
@@ -65,9 +72,10 @@ const InvestmentController: investemntControllerI = {
         investment.set("lastName", folder.get("lastName"));
         investment.set("tel", folder.get("tel"));
         investment.set("email", folder.get("email"));
-        investment.set("endDate", date);
+        investment.set("startDate", dateStart);
+        investment.set("endDate", dateEnd);
         investment.set("initialAmount", initialAmount * 1);
-        investment.set("commission", initialAmount * 1 * 0.0492);
+        investment.set("commission", initialAmount * 1 * 0.04);
 
         investment.save();
         return res

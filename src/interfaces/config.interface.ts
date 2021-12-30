@@ -8,8 +8,21 @@ interface secureI {
     token_salt;
 }
 
+interface nodeMailI {
+    host: string;
+    port: string;
+    login: string;
+    password: string;
+}
+
+interface SMSI {
+    auth: string;
+}
+
 export interface configI {
     PORT: number;
     db: dbI;
     secure: secureI;
+    nodeMail: nodeMailI;
+    SMS: SMSI;
 }

@@ -1,13 +1,7 @@
-import { NextFunction, Request, Response } from "express";
-
-type middlewareFunction = (
-    req: Request,
-    res: Response,
-    next: NextFunction
-) => void;
+import { expressFunction } from "./general.interface";
 
 export interface AuthI {
-    generateToken: middlewareFunction;
-    checkToken: middlewareFunction;
-    logout: middlewareFunction;
+    generateToken: expressFunction;
+    checkToken: expressFunction;
+    logout: expressFunction;
 }

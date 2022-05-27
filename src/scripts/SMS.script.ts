@@ -1,4 +1,3 @@
-import { response } from "express";
 import { SMSAPI, MessageResponse } from "smsapi";
 import config from "../config";
 import { SMSScriptI } from "../interfaces/SMS.interface";

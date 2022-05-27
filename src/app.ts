@@ -2,9 +2,11 @@ import express from "express";
 import cors from "cors";
 import userRouter from "./routes/user.router";
 import db from "./database/server.db";
-import folderRouter from "./routes/Folder.router";
+import investorRouter from "./routes/Investor.router";
 import investmentRouter from "./routes/Investment.router";
 import installmentRouter from "./routes/Installment.router";
+import "./scripts/checkTime.script";
+import morgan from "morgan";
 
 const app = express();
 
@@ -13,6 +15,10 @@ db.once("open", () => {
     console.log("DB connection - success");
 });
 
+//? DEV
+app.use(morgan("dev"));
+
+//? Config
 app.use(cors());
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
@@ -22,9 +28,9 @@ app.get("/", (req, res) => {
 });
 
 app.use("/users", userRouter);
-app.use("/folders", folderRouter);
-app.use("/investment", investmentRouter);
-app.use("/installment", installmentRouter);
+app.use("/investors", investorRouter);
+app.use("/investments", investmentRouter);
+app.use("/installments", installmentRouter);
 
 app.use((req, res) => {
     req;

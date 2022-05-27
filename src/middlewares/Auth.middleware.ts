@@ -1,5 +1,5 @@
 import { NextFunction, Request, Response } from "express";
-import sha256 from "sha256";
+import md5 from "md5";
 import config from "../config";
 import UserSchema from "../database/models/User.schema";
 import { AuthI } from "../interfaces/Auth.interface";
@@ -7,32 +7,32 @@ import { AuthI } from "../interfaces/Auth.interface";
 class Auth implements AuthI {
     private static tokens: Map<string | string[], string> = new Map();
     async generateToken(req: Request, res: Response, next: NextFunction) {
-        if (!req.body.login || !req.body.password) {
+        if (!req.body.email || !req.body.password) {
             return res
                 .status(400)
                 .json({ message: "Body is empty", status: 400 });
         }
-        const { login, password } = req.body;
-        const passwordWithSalt = sha256(
+        const { email, password } = req.body;
+        const passwordWithSalt = md5(
             `#${password}!${config.secure.password_salt}`
         );
         const user = await UserSchema.findOne(
-            { login, password: passwordWithSalt },
-            "id"
+            { email, password: passwordWithSalt },
+            "secureID"
         );
         if (!user) {
             return res
                 .status(406)
                 .json({ message: "Login or password is wrong", status: 406 });
         }
-        const id = user.get("id");
-        const token = sha256(
-            `$!${Math.random()}+${id}-!${config.secure.token_salt}`
+        const secureID = user.get("secureID");
+        const token = md5(
+            `$!${Math.random()}+${secureID}-!${config.secure.token_salt}`
         );
-        Auth.tokens.set(token, id);
+        Auth.tokens.set(token, secureID);
         req.body.secure = {};
         req.body.secure.token = token;
-        Auth.clearToken(token, 30);
+        Auth.clearToken(token, 60 * 24);
         next();
     }
 
@@ -69,7 +69,7 @@ class Auth implements AuthI {
         if (!Auth.tokens.get(token)) {
             return res
                 .status(406)
-                .json({ message: "You no longer log in", status: 406 });
+                .json({ message: "You are no longer log in", status: 406 });
         }
         Auth.tokens.delete(token);
         return res
@@ -78,8 +78,13 @@ class Auth implements AuthI {
     }
 
     public async isAdmin(req: Request, res: Response, next: NextFunction) {
-        const id = req.body.secure.id;
-        const user = await UserSchema.findOne({ id });
+        const secureID = req.body.secure.id;
+        const user = await UserSchema.findOne({ secureID });
+        if (!user) {
+            return res
+                .status(404)
+                .json({ message: "User does not exist", status: 404 });
+        }
         if (user.get("admin")) {
             next();
         } else {

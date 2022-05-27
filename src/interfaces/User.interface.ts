@@ -1,9 +1,21 @@
-import { Request, Response } from "express";
-
-type syncFunction = (req: Request, res: Response) => Response;
-type asyncFunction = (req: Request, res: Response) => Promise<Response>;
+import { expressFunction } from "./general.interface";
 
 export interface userControllerI {
-    login: syncFunction;
-    register: asyncFunction;
+    getUserInfo: expressFunction;
+    checkToken: expressFunction;
+    login: expressFunction;
+    register: expressFunction;
+}
+
+export interface userI {
+    id: string;
+    secureID: string;
+    email: string;
+    password: string;
+    name: string;
+    tel: string;
+    investmentAmount: number;
+    adress: string;
+    admin: boolean;
+    createdAt: Date;
 }

@@ -1,7 +1,7 @@
 import express from "express";
 import InvestmentController from "../controllers/Investment.controller";
 import AuthMiddleware from "../middlewares/Auth.middleware";
-import multer from "multer";
+import uploadFiles from "../middlewares/File.middleware";
 
 const investmentRouter = express.Router();
 
@@ -37,10 +37,17 @@ investmentRouter.get(
     InvestmentController.getAllInstallments
 );
 
+investmentRouter.get(
+    "/id/:id/contract/:file",
+    // AuthMiddleware.checkToken,
+    // AuthMiddleware.isAdmin,
+    InvestmentController.getOneInvestmentContract
+);
+
 //? Create new investment
 investmentRouter.post(
     "/",
-    multer().single("contract"),
+    uploadFiles("investments", "files"),
     AuthMiddleware.checkToken,
     // AuthMiddleware.isAdmin,
     InvestmentController.createNewInwestment
@@ -60,6 +67,19 @@ investmentRouter.get(
     AuthMiddleware.checkToken,
     // AuthMiddleware.isAdmin,
     InvestmentController.getPaymentDelay
+);
+
+investmentRouter.put(
+    "/",
+    AuthMiddleware.checkToken,
+    InvestmentController.editInvestment
+);
+
+//? Delete one investment
+investmentRouter.delete(
+    "/id/:id",
+    AuthMiddleware.checkToken,
+    InvestmentController.deleteInvestment
 );
 
 export default investmentRouter;

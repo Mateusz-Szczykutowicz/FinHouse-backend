@@ -3,14 +3,17 @@ import InvestorSchema from "../database/models/Investor.schema";
 import InstallmentSchema from "../database/models/Installment.schema";
 import InvestmentSchema from "../database/models/Investment.schema";
 import {
-    investemntControllerI,
+    investmentControllerI,
     investmentDataI,
     investmentI,
 } from "../interfaces/Investment.interface";
 import { customAlphabet } from "nanoid";
 import { InstallmentStatusE } from "../interfaces/Installment.interface";
+import { file } from "../interfaces/general.interface";
+import path from "path";
+import { getDayDifference } from "../scripts/date.script";
 
-const InvestmentController: investemntControllerI = {
+const InvestmentController: investmentControllerI = {
     getAllInvestments: async (req, res) => {
         const userId = req.body.secure.id;
         const investments = await InvestmentSchema.find({ userId });
@@ -24,6 +27,7 @@ const InvestmentController: investemntControllerI = {
         const investorId = req.params.id;
         const userId = req.body.secure.id;
         const investments = await InvestmentSchema.find({ investorId, userId });
+
         return res.status(200).json({
             message: "All investor's investments",
             status: 200,
@@ -33,9 +37,33 @@ const InvestmentController: investemntControllerI = {
     getOneInvestment: async (req, res) => {
         const id = req.params.id;
         const investment = await InvestmentSchema.findOne({ id });
-        return res
-            .status(200)
-            .json({ message: "One investment", status: 200, data: investment });
+        if (!investment) {
+            return res
+                .status(404)
+                .json({ message: "Investment does not exist", status: 404 });
+        }
+        return res.status(200).json({
+            message: "One investment",
+            status: 200,
+            data: investment,
+        });
+    },
+    getOneInvestmentContract: async (req, res) => {
+        const id = req.params.id;
+        const investment = await InvestmentSchema.findOne({ id }, "name");
+        if (!investment) {
+            return res.status(404).json({
+                message: "Investor does not exist",
+                status: 404,
+            });
+        }
+        const name = investment.get("name");
+        const fileName = req.params.file;
+        const dir = path.join(
+            __dirname,
+            `../../uploads/investments/${name}/${fileName}`
+        );
+        return res.status(200).download(dir);
     },
     createNewInwestment: async (req, res) => {
         const investmentData: investmentDataI = req.body;
@@ -56,6 +84,11 @@ const InvestmentController: investemntControllerI = {
                 message: "One of the fields is empty",
                 status: 400,
             });
+        }
+        if (!req.files) {
+            return res
+                .status(400)
+                .json({ message: "Files are not exist", status: 400 });
         }
         const userId = req.body.secure.id;
 
@@ -90,50 +123,55 @@ const InvestmentController: investemntControllerI = {
         investment.set("lastInstallment", endDate);
         investment.set(
             "investorCapital",
-            Number.isNaN(parseInt(investorCapital))
+            Number.isNaN(parseFloat(investorCapital))
                 ? 0
-                : parseInt(investorCapital)
+                : parseFloat(investorCapital)
         );
         investment.set(
             "commissionAmount",
-            Number.isNaN(parseInt(commissionAmount))
+            Number.isNaN(parseFloat(commissionAmount))
                 ? 0
-                : parseInt(commissionAmount)
+                : parseFloat(commissionAmount)
         );
         investment.set(
             "installmentAmount",
-            Number.isNaN(parseInt(installmentAmount))
+            Number.isNaN(parseFloat(installmentAmount))
                 ? 0
-                : parseInt(installmentAmount)
+                : parseFloat(installmentAmount)
         );
         investment.set(
             "numberOfInstallment",
-            Number.isNaN(parseInt(numberOfInstallment))
+            Number.isNaN(parseFloat(numberOfInstallment))
                 ? 0
-                : parseInt(numberOfInstallment)
+                : parseFloat(numberOfInstallment)
         );
         investment.set(
             "gracePeriod",
-            Number.isNaN(parseInt(gracePeriod)) ? 0 : parseInt(gracePeriod)
+            Number.isNaN(parseFloat(gracePeriod)) ? 0 : parseFloat(gracePeriod)
         );
         investment.set(
             "otherCommision",
-            Number.isNaN(parseInt(otherCommision))
+            Number.isNaN(parseFloat(otherCommision))
                 ? 0
-                : parseInt(otherCommision)
+                : parseFloat(otherCommision)
         );
-        investment.set("contract", "contract");
+        const files: file[] = JSON.parse(JSON.stringify(req.files));
+        let filename = [];
+        for (const file of files) {
+            filename.push(`${file.filename}`);
+        }
+        investment.set("contract", filename.join(", "));
 
         const investmentId = id;
-        const postponement = Number.isNaN(parseInt(gracePeriod))
+        const postponement = Number.isNaN(parseFloat(gracePeriod))
             ? 0
-            : parseInt(gracePeriod);
-        const quantity = Number.isNaN(parseInt(numberOfInstallment))
+            : parseFloat(gracePeriod);
+        const quantity = Number.isNaN(parseFloat(numberOfInstallment))
             ? 0
-            : parseInt(numberOfInstallment);
-        const initialAmount = Number.isNaN(parseInt(installmentAmount))
+            : parseFloat(numberOfInstallment);
+        const initialAmount = Number.isNaN(parseFloat(installmentAmount))
             ? 0
-            : parseInt(installmentAmount);
+            : parseFloat(installmentAmount);
 
         if (quantity < 1) {
             return res.status(400).json({
@@ -233,8 +271,10 @@ const InvestmentController: investemntControllerI = {
                 .status(404)
                 .json({ message: "Investment does not exist", status: 404 });
         }
+        console.log("investment :>> ", investment);
         const installments = await InstallmentSchema.find(
             {
+                investmentId: investment.get("id"),
                 lastInstallment: {
                     $gte: investment.get("firstInstallment"),
                     $lte: now,
@@ -242,12 +282,14 @@ const InvestmentController: investemntControllerI = {
             },
             "paymentDelay"
         );
-        const paymentDelay = installments
-            .map((installment) => installment.get("paymentDelay") * 1)
-            .reduce(
-                (paymentDelayPrev, paymentDelayNext) =>
-                    paymentDelayPrev * 1 + paymentDelayNext * 1
-            );
+        console.log("installments :>> ", installments);
+        // const paymentDelay = installments
+        //     .map((installment) => installment.get("paymentDelay") * 1)
+        //     .reduce(
+        //         (paymentDelayPrev, paymentDelayNext) =>
+        //             paymentDelayPrev * 1 + paymentDelayNext * 1
+        //     );
+        const paymentDelay = installments[0].get("paymentDelay") * 1;
 
         return res.status(200).json({
             message: "Payment daley",
@@ -256,18 +298,95 @@ const InvestmentController: investemntControllerI = {
         });
     },
     getAllInstallments: async (req, res) => {
+        const now = new Date();
         const userId = req.body.secure.id;
         const investmentId = req.params.id;
         console.log("investmentId :>> ", investmentId);
-        const installments = await InstallmentSchema.find({
-            userId,
-            investmentId,
+        const installments =
+            (await InstallmentSchema.find({
+                userId,
+                investmentId,
+            }).sort({ startDate: 1 })) || [];
+        for (const installment of installments) {
+            if (
+                installment.get("initialAmount") -
+                    installment.get("paidAmount") >
+                0
+            ) {
+                const startDate = new Date(installment.get("startDate"));
+                const now = new Date();
+                const dayDiff = getDayDifference(now, startDate);
+                installment.set("paymentDelay", dayDiff);
+                console.log("installment :>> ", installment);
+                installment.save();
+            } else {
+                installment.set("paymentDelay", 0);
+                installment.save();
+            }
+        }
+        const filteredInstallments = installments.filter((installment) => {
+            const endDate = new Date(installment.get("endDate"));
+            return (
+                installment.get("initialAmount") -
+                    installment.get("paidAmount") >
+                    0 && endDate < now
+            );
         });
+        let value = 0;
+        if (installments.length > 0) {
+            const mappedInstallments = filteredInstallments.map((installment) =>
+                installment.get("initialAmount")
+            );
+            value +=
+                mappedInstallments.length > 0
+                    ? mappedInstallments.reduce((prev, next) => prev + next)
+                    : 0;
+        }
         res.status(200).json({
             message: "All investment's installments",
             status: 200,
-            data: installments,
+            data: { installments, value },
         });
+    },
+    deleteInvestment: async (req, res) => {
+        const id = req.params.id;
+        const countOfDeletedInstallment = await InstallmentSchema.deleteMany({
+            investmentId: id,
+        });
+        const deletedInvestment = await InvestmentSchema.deleteOne({ id: id });
+        return res.status(200).json({
+            message: "Delete one investment",
+            status: 200,
+            data: { countOfDeletedInstallment, deletedInvestment },
+        });
+    },
+    editInvestment: async (req, res) => {
+        const userId = req.body.secure.id;
+        if (
+            !req.body.id ||
+            !req.body.name ||
+            !req.body.tel ||
+            !req.body.email
+        ) {
+            return res.status(400).json({
+                message: "Name or Id or email or tel field is empty",
+                status: 400,
+            });
+        }
+        const { id, name, tel, email } = req.body;
+        const investment = await InvestmentSchema.findOne({ id, userId });
+        if (!investment) {
+            return res
+                .status(404)
+                .json({ message: "Investment does not exist", status: 404 });
+        }
+        investment.set("name", name);
+        investment.set("tel", tel);
+        investment.set("email", email);
+        investment.save();
+        return res
+            .status(200)
+            .json({ message: "Investment edited success", status: 200 });
     },
 };
 

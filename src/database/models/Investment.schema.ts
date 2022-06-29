@@ -20,6 +20,7 @@ const InvestmentSchema = new mongoose.Schema<investmentI>({
     gracePeriod: { type: Number, default: 0 },
     otherCommision: { type: Number, default: 0 },
     contract: { type: String, default: "" },
+    active: { type: Boolean, default: true },
 });
 
 export default mongoose.model("Investment", InvestmentSchema);

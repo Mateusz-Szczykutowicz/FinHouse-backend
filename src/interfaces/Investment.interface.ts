@@ -1,7 +1,7 @@
 import { Request, Response } from "express";
 import { expressFunction } from "./general.interface";
 
-export interface investemntControllerI {
+export interface investmentControllerI {
     getAllInvestments: expressFunction;
     getAllInvestorInvestments: expressFunction;
     getOneInvestment: expressFunction;
@@ -9,6 +9,9 @@ export interface investemntControllerI {
     createNewInwestment: expressFunction;
     getOverpaymentAndUnderpayments: expressFunction;
     getPaymentDelay: expressFunction;
+    getOneInvestmentContract: expressFunction;
+    editInvestment: expressFunction;
+    deleteInvestment: expressFunction;
 }
 
 export interface investmentDataI {
@@ -24,7 +27,8 @@ export interface investmentDataI {
     numberOfInstallment: string;
     gracePeriod: string;
     otherCommision: string;
-    contract: File;
+    contract: string;
+    active: boolean;
 }
 
 export interface investmentI {
@@ -43,4 +47,5 @@ export interface investmentI {
     gracePeriod: number;
     otherCommision: number;
     contract: string;
+    active: boolean;
 }

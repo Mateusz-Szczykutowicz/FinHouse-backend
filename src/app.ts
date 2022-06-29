@@ -1,12 +1,13 @@
 import express from "express";
 import cors from "cors";
-import userRouter from "./routes/user.router";
+import userRouter from "./routes/User.router";
 import db from "./database/server.db";
 import investorRouter from "./routes/Investor.router";
 import investmentRouter from "./routes/Investment.router";
 import installmentRouter from "./routes/Installment.router";
 import "./scripts/checkTime.script";
 import morgan from "morgan";
+import adminRouter from "./routes/Admin.router";
 
 const app = express();
 
@@ -31,6 +32,7 @@ app.use("/users", userRouter);
 app.use("/investors", investorRouter);
 app.use("/investments", investmentRouter);
 app.use("/installments", installmentRouter);
+app.use("/admin", adminRouter);
 
 app.use((req, res) => {
     req;

@@ -1,5 +1,5 @@
 import mongoose from "mongoose";
-import { userI } from "../../interfaces/User.interface";
+import { userI, userStatusE } from "../../interfaces/User.interface";
 
 const UserSchema = new mongoose.Schema<userI>({
     id: { type: String, required: true },
@@ -12,6 +12,7 @@ const UserSchema = new mongoose.Schema<userI>({
     name: { type: String, required: true },
     tel: { type: String, required: true },
     createdAt: { type: Date, default: new Date() },
+    status: { type: String, default: userStatusE.INPROGRESS },
 });
 
 export default mongoose.model("User", UserSchema);

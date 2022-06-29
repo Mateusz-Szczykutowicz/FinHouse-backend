@@ -4,8 +4,8 @@ interface dbI {
 }
 
 interface secureI {
-    password_salt;
-    token_salt;
+    password_salt: string;
+    token_salt: string;
 }
 
 interface nodeMailI {

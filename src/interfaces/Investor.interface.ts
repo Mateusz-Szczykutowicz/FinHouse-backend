@@ -11,6 +11,7 @@ export type investorStatusT = investorStatusE;
 export interface InvestorControllerI {
     getAllUserInvestors: expressFunction;
     getOneUserInvestor: expressFunction;
+    getOneInvestorContract: expressFunction;
     createNewInvestor: expressFunction;
     editInvestor: expressFunction;
 }
@@ -22,6 +23,6 @@ export interface InvestorI {
     email: string;
     tel: string;
     commission: number;
-    contract: string;
+    files: string;
     createdAt: Date;
 }

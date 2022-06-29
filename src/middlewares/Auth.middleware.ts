@@ -3,6 +3,7 @@ import md5 from "md5";
 import config from "../config";
 import UserSchema from "../database/models/User.schema";
 import { AuthI } from "../interfaces/Auth.interface";
+import { userStatusE } from "../interfaces/User.interface";
 
 class Auth implements AuthI {
     private static tokens: Map<string | string[], string> = new Map();
@@ -32,6 +33,7 @@ class Auth implements AuthI {
         Auth.tokens.set(token, secureID);
         req.body.secure = {};
         req.body.secure.token = token;
+        req.body.secure.id = secureID;
         Auth.clearToken(token, 60 * 24);
         next();
     }
@@ -86,6 +88,23 @@ class Auth implements AuthI {
                 .json({ message: "User does not exist", status: 404 });
         }
         if (user.get("admin")) {
+            next();
+        } else {
+            return res
+                .status(403)
+                .json({ message: "You do not have permission", status: 403 });
+        }
+    }
+
+    public async isAccept(req: Request, res: Response, next: NextFunction) {
+        const secureID = req.body.secure.id;
+        const user = await UserSchema.findOne({ secureID }, "status");
+        if (!user) {
+            return res
+                .status(404)
+                .json({ message: "User does not exist", status: 404 });
+        }
+        if (user.get("status") === userStatusE.ACCEPTED) {
             next();
         } else {
             return res

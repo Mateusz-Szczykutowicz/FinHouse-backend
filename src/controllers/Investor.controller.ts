@@ -5,9 +5,10 @@ import {
     InvestorControllerI,
     InvestorI,
 } from "../interfaces/Investor.interface";
-import UserSchema from "../database/models/User.schema";
 import { customAlphabet } from "nanoid";
-import { investmentI } from "../interfaces/Investment.interface";
+import { file } from "../interfaces/general.interface";
+import fs from "fs";
+import path from "path";
 
 const InvestorController: InvestorControllerI = {
     getAllUserInvestors: async (req, res) => {
@@ -73,8 +74,26 @@ const InvestorController: InvestorControllerI = {
             .status(200)
             .json({ message: "Investor", status: 200, data: investor });
     },
+    getOneInvestorContract: async (req, res) => {
+        const id = req.params.id;
+        const investor = await InvestorSchema.findOne({ id }, "name");
+        if (!investor) {
+            return res
+                .status(404)
+                .json({ message: "Investor does not exist", status: 404 });
+        }
+        const name = investor.get("name");
+        const fileName = req.params.file;
+        const dir = path.join(
+            __dirname,
+            `../../uploads/investors/${name}/${fileName}`
+        );
+        return res.status(200).download(dir);
+    },
     createNewInvestor: async (req, res) => {
-        console.log("req.headers :>> ", req.headers);
+        console.log("req.body :>> ", req.body);
+        console.log("req.files :>> ", req.files);
+
         if (
             !req.body.name ||
             !req.body.tel ||
@@ -87,21 +106,33 @@ const InvestorController: InvestorControllerI = {
                 status: 400,
             });
         }
+        if (!req.files) {
+            return res
+                .status(400)
+                .json({ message: "Files are not exist", status: 400 });
+        }
         const secureID = req.body.secure.id;
         const { name, tel, email, commission } = req.body;
+
+        const files: file[] = JSON.parse(JSON.stringify(req.files));
+        let filename = [];
+        for (const file of files) {
+            filename.push(`${file.filename}`);
+        }
         const commissionNumber = Number.isNaN(parseInt(commission))
             ? 0
             : parseInt(commission);
         const investor = new InvestorSchema();
         const nanoid = customAlphabet("1234567890ABCDEF", 12);
         const id = nanoid();
+
         investor.set("id", id);
         investor.set("userId", secureID);
         investor.set("name", name);
         investor.set("email", email);
         investor.set("tel", tel);
         investor.set("commission", commissionNumber);
-        investor.set("contract", "contract");
+        investor.set("files", filename.join(", "));
         investor.save();
         return res
             .status(201)

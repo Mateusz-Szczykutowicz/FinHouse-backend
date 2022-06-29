@@ -1,7 +1,7 @@
 import express from "express";
 import InvestorController from "../controllers/Investor.controller";
 import AuthMiddleware from "../middlewares/Auth.middleware";
-import multer from "multer";
+import uploadFiles from "../middlewares/File.middleware";
 
 const investorRouter = express.Router();
 
@@ -13,15 +13,22 @@ investorRouter.get(
 );
 
 investorRouter.get(
-    "/investor/:id",
+    "/id/:id",
     AuthMiddleware.checkToken,
     // AuthMiddleware.isAdmin,
     InvestorController.getOneUserInvestor
 );
 
+investorRouter.get(
+    "/id/:id/contract/:file",
+    AuthMiddleware.checkToken,
+    // AuthMiddleware.isAdmin,
+    InvestorController.getOneInvestorContract
+);
+
 investorRouter.post(
     "/",
-    multer().single("file"),
+    uploadFiles("investors", "files"),
     AuthMiddleware.checkToken,
     // AuthMiddleware.isAdmin,
     InvestorController.createNewInvestor
